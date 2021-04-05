@@ -1,3 +1,5 @@
+import random
+
 import librosa
 import librosa.display
 import torch
@@ -11,6 +13,7 @@ from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import numpy as np
 
 #######tensorboard --logdir C:\Users\chaki\PycharmProjects\GAN\logs
 #######http://localhost:6006/
@@ -58,23 +61,42 @@ transforms = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,)),]
 )
 
-y,sr =librosa.load('sampled/1.wav', duration=0.10)
+y,sr =librosa.load('original/0.wav', duration=2.97)
 ps = librosa.feature.melspectrogram(y=y, sr=sr)
-print(ps)
-print(ps.shape)
+#print(ps)
+#print(ps.shape)
 librosa.display.specshow(ps, y_axis='mel', x_axis='time')
-plt.show()
+#plt.show()
+
+D = [] # Dataset
+
+for row in range(8):
+    y, sr = librosa.load('original/'+str(row)+'.wav', duration=2.97)
+    ps = librosa.feature.melspectrogram(y=y, sr=sr)
+    print(ps.shape)
+    if ps.shape != (128, 128): continue
+    D.append((ps, str(row)))
+    print(ps.shape)
+
+dataset = D
+random.shuffle(dataset)
+
+print(dataset)
+
+X_train, y_train = zip(*dataset)
+X_train = np.array([x.reshape( (128, 128, 1) ) for x in X_train])
 
 #plt.imshow(librosa.display.specshow(ps, y_axis='mel', x_axis='time'))
-
-
 #dataset = datasets.MNIST(root="dataset/", transform=transforms, download=True)
 #dataset = 'sampled/'
 #df = np.loadtxt('sampled/')
-df = pd.read_csv('datasetClean.csv', delimiter=';')
-print(df.head())
+#df = pd.read_csv('datasetClean.csv', delimiter=';')
+#print(df.head())
+
+
+
 #loader = DataLoader('dataset.csv', batch_size=batch_size, shuffle=True)
-loader = DataLoader(df, batch_size=batch_size, shuffle=True)
+loader = DataLoader(X_train, batch_size=batch_size, shuffle=True)
 #loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
