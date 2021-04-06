@@ -50,7 +50,7 @@ class Generator(nn.Module):
 device = "cuda" if torch.cuda.is_available() else "cpu"
 lr = 3e-4
 z_dim = 64
-image_dim = 28 * 28 * 1  # 784
+image_dim = 128 * 128 * 1  # 16384
 batch_size = 32
 num_epochs = 50
 
@@ -64,7 +64,6 @@ transforms = transforms.Compose(
 y,sr =librosa.load('original/0.wav', duration=2.97)
 ps = librosa.feature.melspectrogram(y=y, sr=sr)
 #print(ps)
-#print(ps.shape)
 librosa.display.specshow(ps, y_axis='mel', x_axis='time')
 #plt.show()
 
@@ -73,15 +72,15 @@ D = [] # Dataset
 for row in range(8):
     y, sr = librosa.load('original/'+str(row)+'.wav', duration=2.97)
     ps = librosa.feature.melspectrogram(y=y, sr=sr)
-    print(ps.shape)
+    #print(ps.shape)
     if ps.shape != (128, 128): continue
     D.append((ps, str(row)))
-    print(ps.shape)
+    #print(ps.shape)
 
 dataset = D
 random.shuffle(dataset)
 
-print(dataset)
+#print(dataset)
 
 X_train, y_train = zip(*dataset)
 X_train = np.array([x.reshape( (128, 128, 1) ) for x in X_train])
@@ -99,6 +98,7 @@ X_train = np.array([x.reshape( (128, 128, 1) ) for x in X_train])
 loader = DataLoader(X_train, batch_size=batch_size, shuffle=True)
 #loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+#print('loader ',loader)
 
 opt_disc = optim.Adam(disc.parameters(), lr=lr)
 opt_gen = optim.Adam(gen.parameters(), lr=lr)
@@ -108,12 +108,14 @@ writer_real = SummaryWriter(f"logs/real")
 step = 0
 
 for epoch in range(num_epochs):
-    for batch_idx, (real, _) in enumerate(loader):
-        real = real.view(-1, 784).to(device)
+    for batch_idx, (real) in enumerate(loader):
+        real = real.view(-1, 16384).to(device)
         batch_size = real.shape[0]
+        print('batch ',batch_size)
 
         ### Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
         noise = torch.randn(batch_size, z_dim).to(device)
+        #print('noise shape ', len(noise[0]))
         fake = gen(noise)
         disc_real = disc(real).view(-1)
         lossD_real = criterion(disc_real, torch.ones_like(disc_real))
@@ -140,8 +142,11 @@ for epoch in range(num_epochs):
             )
 
             with torch.no_grad():
-                fake = gen(fixed_noise).reshape(-1, 1, 28, 28)
-                data = real.reshape(-1, 1, 28, 28)
+                fake = gen(fixed_noise).reshape(-1, 1, 128, 128)
+
+
+
+                data = real.reshape(-1, 1, 128, 128)
                 img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
                 img_grid_real = torchvision.utils.make_grid(data, normalize=True)
 
