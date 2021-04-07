@@ -1,10 +1,12 @@
 import random
 
-import librosa
+
 import librosa.display
+import librosa
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchaudio
 import torchvision
 import torchvision.datasets as datasets
 from torch.utils.data import DataLoader
@@ -14,6 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+import soundfile as sf
 
 #######tensorboard --logdir C:\Users\chaki\PycharmProjects\GAN\logs
 #######http://localhost:6006/
@@ -39,7 +42,7 @@ class Generator(nn.Module):
             nn.Linear(z_dim, 256),
             nn.LeakyReLU(0.01),
             nn.Linear(256, img_dim),
-            nn.Tanh(),  # normalize inputs to [-1, 1] so make outputs [-1, 1]
+            nn.LeakyReLU(0.01),
         )
 
     def forward(self, x):
@@ -52,7 +55,7 @@ lr = 3e-4
 z_dim = 64
 image_dim = 128 * 128 * 1  # 16384
 batch_size = 32
-num_epochs = 50
+num_epochs = 100
 
 disc = Discriminator(image_dim).to(device)
 gen = Generator(z_dim, image_dim).to(device)
@@ -61,44 +64,26 @@ transforms = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,)),]
 )
 
-y,sr =librosa.load('original/0.wav', duration=2.97)
-ps = librosa.feature.melspectrogram(y=y, sr=sr)
-#print(ps)
-librosa.display.specshow(ps, y_axis='mel', x_axis='time')
-#plt.show()
+
 
 D = [] # Dataset
 
-for row in range(8):
-    y, sr = librosa.load('original/'+str(row)+'.wav', duration=2.97)
-    ps = librosa.feature.melspectrogram(y=y, sr=sr)
-    #print(ps.shape)
-    if ps.shape != (128, 128): continue
-    D.append((ps, str(row)))
-    #print(ps.shape)
+for row in range(1284):
+
+    waveform, sr = torchaudio.load('original/m ('+str(row)+').wav')
+    #print(waveform)
+    ps = waveform
+    print(ps.size())
+    D.append((ps))
+    #print(D)
 
 dataset = D
 random.shuffle(dataset)
 
-#print(dataset)
-
 X_train, y_train = zip(*dataset)
 X_train = np.array([x.reshape( (128, 128, 1) ) for x in X_train])
 
-#plt.imshow(librosa.display.specshow(ps, y_axis='mel', x_axis='time'))
-#dataset = datasets.MNIST(root="dataset/", transform=transforms, download=True)
-#dataset = 'sampled/'
-#df = np.loadtxt('sampled/')
-#df = pd.read_csv('datasetClean.csv', delimiter=';')
-#print(df.head())
-
-
-
-#loader = DataLoader('dataset.csv', batch_size=batch_size, shuffle=True)
 loader = DataLoader(X_train, batch_size=batch_size, shuffle=True)
-#loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
-#print('loader ',loader)
 
 opt_disc = optim.Adam(disc.parameters(), lr=lr)
 opt_gen = optim.Adam(gen.parameters(), lr=lr)
@@ -109,9 +94,8 @@ step = 0
 
 for epoch in range(num_epochs):
     for batch_idx, (real) in enumerate(loader):
-        real = real.view(-1, 16384).to(device)
+        real = real.view(-1, 16384).to(device) #16384 is flattened array(128*128)
         batch_size = real.shape[0]
-        print('batch ',batch_size)
 
         ### Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
         noise = torch.randn(batch_size, z_dim).to(device)
@@ -144,9 +128,10 @@ for epoch in range(num_epochs):
             with torch.no_grad():
                 fake = gen(fixed_noise).reshape(-1, 1, 128, 128)
 
-
-
                 data = real.reshape(-1, 1, 128, 128)
+                #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
+                #plt.show()
+
                 img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
                 img_grid_real = torchvision.utils.make_grid(data, normalize=True)
 
@@ -157,5 +142,9 @@ for epoch in range(num_epochs):
                     "Mnist Real Images", img_grid_real, global_step=step
                 )
                 step += 1
+
+    #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
+    #plt.show()
+    #librosa.output.write_wav('/generated/test', ps2[0], ps2[1], norm=False)
 
 ########output_signal = tf.audio.encode_wav(input_signal[0], input_signal[1])
