@@ -166,4 +166,9 @@ for epoch in range(num_epochs):
     #plt.show()
     #librosa.output.write_wav('/generated/test', ps2[0], ps2[1], norm=False)
 
+<<<<<<< HEAD
 ########output_signal = tf.audio.encode_wav(input_signal[0], input_signal[1])
+=======
+########output_signal = tf.audio.encode_wav(input_signal[0], input_signal[1])
+                step += 1
+>>>>>>> main.py
