@@ -1,10 +1,12 @@
 import random
+import librosa.display
+import librosa
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchaudio
 import torchvision
-import torchvision.datasets as datasets
+from torch.distributed import optim
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
@@ -144,20 +146,20 @@ for epoch in range(num_epochs):
                 #song = np.array([reduced_noise],[reduced_noise])
                 #torchaudio.save(str(epoch)+'.wav', fake, fixed_sample_rate)
 
-                #data = real.reshape(-1, 1, 500, 500)
+                data = real.reshape(-1, 1, 500, 500)
 
                 #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
                 #plt.show()
 
-                #img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
-                #img_grid_real = torchvision.utils.make_grid(data, normalize=True)
+                img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
+                img_grid_real = torchvision.utils.make_grid(data, normalize=True)
 
-                #writer_fake.add_image(
-                #    "Mnist Fake Images", img_grid_fake, global_step=step
-               # )
-                #writer_real.add_image(
-                #    "Mnist Real Images", img_grid_real, global_step=step
-                #)
+                writer_fake.add_image(
+                    "Mnist Fake Images", img_grid_fake, global_step=step
+                )
+                writer_real.add_image(
+                    "Mnist Real Images", img_grid_real, global_step=step
+                )
                 step += 1
 
     #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
