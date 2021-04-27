@@ -8,7 +8,10 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from torch.utils.tensorboard import SummaryWriter  # to print to tensorboard
 import os
+from music21 import converter, instrument, note, chord
 from magenta.models.gansynth.lib import networks as network
+from note_seq import midi_io as ns
+from note_seq import midi_synth
 
 FILE_PATH = 'MIDI-Unprocessed_SMF_02_R1_2004_01-05_ORIG_MID--AUDIO_02_R1_2004_05_Track05_wav.wav'
 FOLDER_PATH = '/volumes/External Hardrive/maestro-v3.0.0/'
@@ -18,7 +21,7 @@ class Discriminator(nn.Module):
     def __init__(self, in_features):
         super().__init__()
         self.disc = nn.Sequential(
-            nn.Linear(in_features, 500),
+            nn.Linear(in_features, 128),
             nn.LeakyReLU(0.01),
             nn.Linear(500, 1),
             nn.Sigmoid(),
@@ -57,23 +60,26 @@ fixed_noise = torch.randn((batch_size, z_dim)).to(device)
 transforms = transforms.Compose(
     [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,)), ]
 )
-
-directory = FOLDER_PATH + '2004/' + FILE_PATH
+test = ns.midi_file_to_note_sequence('Queen - Bohemian Rhapsody.mid')
+#x = midi_synth.fluidsynth(test, 16000, None)
+print(type(test))
+directory = 'Queen - Bohemian Rhapsody.mid'
 D = []  # Dataset
-waveformDummy, sample_rate = torchaudio.load(directory)
-fixed_sample_rate = sample_rate
-waveformDummy = len(waveformDummy[1])
+#waveformDummy, sample_rate = torchaudio.load(directory)
+#fixed_sample_rate = sample_rate
+#waveformDummy = len(waveformDummy[1])
+#midi = converter.parse(directory)
+
 i = 0
+D = []  # Dataset
 for subdir, dirs, files in os.walk(FOLDER_PATH):
     for filename in files:
+        print(filename)
         if i == ITERATIONS:
             break
-        if filename.endswith(".wav"):
-            waveform, sr = torchaudio.load(subdir + '/' + filename)
-            waveform_mono = torch.mean(waveform, dim=0, keepdim=True)
-            waveform_mono = torch.narrow(waveform_mono, 1, 0, 250000)
-            ps = waveform_mono
-            D.append((ps, str(i)))
+        if filename.endswith(".mid"):
+            #midi = converter.parse(filename)
+            #print(midi)
             i += 1
         else:
             continue
