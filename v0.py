@@ -92,8 +92,6 @@ loader = DataLoader(X_train, batch_size=batch_size, shuffle=True)
 opt_disc = optim.Adam(disc.parameters(), lr=lr)
 opt_gen = optim.Adam(gen.parameters(), lr=lr)
 criterion = nn.BCELoss()
-writer_fake = SummaryWriter(f"logs/fake")
-writer_real = SummaryWriter(f"logs/real")
 step = 0
 
 for epoch in range(num_epochs):
@@ -101,9 +99,9 @@ for epoch in range(num_epochs):
         real = real.view(-1, 250000).to(device) #16384 is flattened array(128*128)
         batch_size = real.shape[0]
 
-        ### Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
+
         noise = torch.randn(batch_size, z_dim).to(device)
-        #print('noise shape ', len(noise[0]))
+
         fake = gen(noise)
         disc_real = disc(real).view(-1)
         lossD_real = criterion(disc_real, torch.ones_like(disc_real))
@@ -113,10 +111,6 @@ for epoch in range(num_epochs):
         disc.zero_grad()
         lossD.backward(retain_graph=True)
         opt_disc.step()
-
-        ### Train Generator: min log(1 - D(G(z))) <-> max log(D(G(z))
-        # where the second option of maximizing doesn't suffer from
-        # saturating gradients
         output = disc(fake).view(-1)
         lossG = criterion(output, torch.ones_like(output))
         gen.zero_grad()
@@ -131,11 +125,8 @@ for epoch in range(num_epochs):
 
             with torch.no_grad():
                 fake = gen(fixed_noise)
-                #fake = torch.narrow(fake, 0, 0, 2)
                 torchaudio.save(str(epoch)+'.wav', fake.cpu(), fixed_sample_rate)
-                #fake = fake[1]
-                #print(fake.size())
-                #output_signal = tf.audio.encode_wav(fake, fixed_sample_rate)
+
 
                 #noisy_part = fake[1:250000]
                 #reduced_noise = nr.reduce_noise(audio_clip=fake.numpy(), noise_clip=noisy_part.numpy(), verbose=True)
@@ -143,20 +134,9 @@ for epoch in range(num_epochs):
                 #song = np.array([reduced_noise],[reduced_noise])
                 #torchaudio.save(str(epoch)+'.wav', fake, fixed_sample_rate)
 
-                #data = real.reshape(-1, 1, 500, 500)
-
                 #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
                 #plt.show()
 
-                #img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
-                #img_grid_real = torchvision.utils.make_grid(data, normalize=True)
-
-                #writer_fake.add_image(
-                #    "Mnist Fake Images", img_grid_fake, global_step=step
-               # )
-                #writer_real.add_image(
-                #    "Mnist Real Images", img_grid_real, global_step=step
-                #)
                 step += 1
 
     #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
