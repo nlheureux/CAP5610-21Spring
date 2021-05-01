@@ -51,7 +51,6 @@ class Generator(nn.Module):
         return self.gen(x)
 
 
-# Hyperparameters etc.
 device = "cuda" if torch.cuda.is_available() else "cpu"
 lr = 3e-4
 z_dim = 64
@@ -126,9 +125,6 @@ for epoch in range(num_epochs):
         lossD.backward(retain_graph=True)
         opt_disc.step()
 
-        ### Train Generator: min log(1 - D(G(z))) <-> max log(D(G(z))
-        # where the second option of maximizing doesn't suffer from
-        # saturating gradients
         output = disc(fake).view(-1)
         lossG = criterion(output, torch.ones_like(output))
         gen.zero_grad()
