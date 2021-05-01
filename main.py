@@ -1,5 +1,4 @@
 import random
-
 import librosa
 import torch
 import torch.nn as nn
@@ -164,15 +163,6 @@ for epoch in range(num_epochs):
                 #librosa.display.specshow(ps2, y_axis='mel', x_axis='time')
                 #plt.show()
 
-                #img_grid_fake = torchvision.utils.make_grid(fake, normalize=True)
-                #img_grid_real = torchvision.utils.make_grid(data, normalize=True)
-
-                #writer_fake.add_image(
-                #    "Mnist Fake Images", img_grid_fake, global_step=step
-               # )
-                #writer_real.add_image(
-                #    "Mnist Real Images", img_grid_real, global_step=step
-                #)
                 step += 1
 
 plt.plot(ep, toplotG)
